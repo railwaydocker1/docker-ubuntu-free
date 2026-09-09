@@ -12,12 +12,7 @@ RUN apt update -y && apt install --no-install-recommends -y \
     software-properties-common ca-certificates unzip openssl
 
 # Firefox از PPA
-RUN add-apt-repository ppa:mozillateam/ppa -y && \
-    echo 'Package: *' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Pin: release o=LP-PPA-mozillateam' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Pin-Priority: 1001' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Unattended-Upgrade::Allowed-Origins:: "LP-PPA-mozillateam:jammy";' | tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox && \
-    apt update -y && apt install -y firefox xubuntu-icon-theme
+RUN apt update -y && apt install -y gnupg gpg-agent software-properties-common
 
 # ساخت کاربر VNC — حتماً بعد از نصب tigervnc (چون vncpasswd لازمه)
 RUN useradd -m -s /bin/bash vncuser && \
