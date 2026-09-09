@@ -18,8 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
-
 # --- Xray ---
 ARG XRAY_VERSION=v1.8.24
 RUN curl -fsSL -o /tmp/xray.zip \
@@ -29,11 +27,13 @@ RUN curl -fsSL -o /tmp/xray.zip \
     && mkdir -p /etc/xray /var/log/xray \
     && rm /tmp/xray.zip
 
-# --- VNC user ---
+# --- VNC user (fixed: uses vncpasswd from tigervnc-common, NOT x11vnc) ---
 RUN useradd -m -s /bin/bash vncuser \
     && mkdir -p /home/vncuser/.vnc \
-    && x11vnc -storepasswd vncuser /home/vncuser/.vnc/passwd \
+    && printf 'vncuser\n' | vncpasswd -f > /home/vncuser/.vnc/passwd \
     && chmod 600 /home/vncuser/.vnc/passwd \
+    && printf '#!/bin/sh\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexec startxfce4\n' > /home/vncuser/.vnc/xstartup \
+    && chmod +x /home/vncuser/.vnc/xstartup \
     && chown -R vncuser:vncuser /home/vncuser
 
 COPY config.json /etc/xray/config.json
