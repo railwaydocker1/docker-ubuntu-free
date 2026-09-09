@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+
+
 # --- Xray ---
 ARG XRAY_VERSION=v1.8.24
 RUN curl -fsSL -o /tmp/xray.zip \
@@ -30,7 +32,7 @@ RUN curl -fsSL -o /tmp/xray.zip \
 # --- VNC user ---
 RUN useradd -m -s /bin/bash vncuser \
     && mkdir -p /home/vncuser/.vnc \
-    && echo "vncuser" | vncpasswd -f > /home/vncuser/.vnc/passwd \
+    && x11vnc -storepasswd vncuser /home/vncuser/.vnc/passwd \
     && chmod 600 /home/vncuser/.vnc/passwd \
     && chown -R vncuser:vncuser /home/vncuser
 
