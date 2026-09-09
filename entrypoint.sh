@@ -1,15 +1,19 @@
 #!/bin/bash
 set -e
 
-# پورت Xray رو با PORT ریلیوی ست کن
+# پورت Xray روی همون پورتی که Railway می‌ده (default 8080)
 XRAY_PORT=${PORT:-8080}
-sed -i "s/\"port\": 8080/\"port\": $XRAY_PORT/" /usr/local/etc/xray/config.json
+sed -i "s/\"port\": 8080/\"port\": $XRAY_PORT/g" /usr/local/etc/xray/config.json
 
-# VNC به‌عنوان vncuser (با پسورد)
-su - vncuser -c "vncserver :1 -geometry 1280x800 -SecurityTypes VncAuth -PasswordFile /home/vncuser/.vnc/passwd -localhost no"
+# بالا آوردن VNC
+vncserver -localhost no -geometry 1280x800 -rfbauth /root/.vnc/passwd :1
 
-# noVNC روی 6080 (بدون cert — TLS رو خود Railway هندل می‌کنه)
-websockify -D --web=/usr/share/novnc/ 6080 localhost:5901
+# گواهی TLS برای noVNC
+cd /root
+openssl req -new -subj "/C=JP" -x509 -days 365 -nodes -out self.pem -keyout self.pem
 
-# Xray به‌عنوان پروسه اصلی
+# noVNC
+websockify -D --web=/usr/share/novnc/ --cert=/root/self.pem 6080 localhost:5901
+
+# Xray به صورت foreground — پروسه اصلی کانتینر
 exec xray run -c /usr/local/etc/xray/config.json
