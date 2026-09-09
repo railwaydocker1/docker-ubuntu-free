@@ -1,36 +1,44 @@
-FROM --platform=linux/amd64 ubuntu:22.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# پکیج‌های اصلی VNC/Desktop
-RUN apt update -y && apt install --no-install-recommends -y \
-    xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify \
-    sudo xterm init systemd snapd vim net-tools curl wget git tzdata \
-    dbus-x11 x11-utils x11-xserver-utils x11-apps \
-    software-properties-common ca-certificates unzip openssl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xfce4 \
+    xfce4-terminal \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    novnc \
+    websockify \
+    firefox \
+    dbus-x11 \
+    x11-utils \
+    net-tools \
+    curl \
+    ca-certificates \
+    unzip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Firefox از PPA
-RUN add-apt-repository ppa:mozillateam/ppa -y && \
-    echo 'Package: *' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Pin: release o=LP-PPA-mozillateam' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Pin-Priority: 1001' >> /etc/apt/preferences.d/mozilla-firefox && \
-    echo 'Unattended-Upgrade::Allowed-Origins:: "LP-PPA-mozillateam:jammy";' | tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox && \
-    apt update -y && apt install -y firefox xubuntu-icon-theme
+# --- Xray ---
+ARG XRAY_VERSION=v1.8.24
+RUN curl -fsSL -o /tmp/xray.zip \
+    "https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/Xray-linux-64.zip" \
+    && unzip -o /tmp/xray.zip -d /usr/local/bin xray \
+    && chmod +x /usr/local/bin/xray \
+    && mkdir -p /etc/xray /var/log/xray \
+    && rm /tmp/xray.zip
 
-# نصب Xray
-RUN bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+# --- VNC user ---
+RUN useradd -m -s /bin/bash vncuser \
+    && mkdir -p /home/vncuser/.vnc \
+    && echo "vncuser" | vncpasswd -f > /home/vncuser/.vnc/passwd \
+    && chmod 600 /home/vncuser/.vnc/passwd \
+    && chown -R vncuser:vncuser /home/vncuser
 
-# کپی کانفیگ Xray
-COPY config.json /usr/local/etc/xray/config.json
-
-# کپی entrypoint
+COPY config.json /etc/xray/config.json
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN touch /root/.Xauthority
+# 8080 = Xray (VLESS+WS)  |  6080 = noVNC  |  5901 = raw VNC
+EXPOSE 8080 6080 5901
 
-EXPOSE 5901
-EXPOSE 6080
-EXPOSE 8080
-
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
