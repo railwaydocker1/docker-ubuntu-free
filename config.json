@@ -13,9 +13,13 @@
       },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/vless" }
+        "wsSettings": {
+          "path": "/vless"
+        }
       }
     }
   ],
-  "outbounds": [ { "protocol": "freedom" } ]
+  "outbounds": [
+    { "protocol": "freedom" }
+  ]
 }
