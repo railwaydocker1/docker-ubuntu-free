@@ -1,19 +1,15 @@
 #!/bin/bash
 set -e
 
-# --- Xray: bind to Railway's injected $PORT (fallback 8080) ---
-PORT="${PORT:-8080}"
-sed -i "s/\"port\": 8080/\"port\": ${PORT}/" /etc/xray/config.json
+# پورت Xray رو با PORT ریلیوی ست کن
+XRAY_PORT=${PORT:-8080}
+sed -i "s/\"port\": 8080/\"port\": $XRAY_PORT/" /usr/local/etc/xray/config.json
 
-# --- D-Bus (XFCE needs it) ---
-mkdir -p /run/dbus
-dbus-daemon --system --fork || true
+# VNC به‌عنوان vncuser (با پسورد)
+su - vncuser -c "vncserver :1 -geometry 1280x800 -SecurityTypes VncAuth -PasswordFile /home/vncuser/.vnc/passwd -localhost no"
 
-# --- VNC desktop as vncuser ---
-su - vncuser -c "vncserver :1 -localhost yes -rfbport 5901 -geometry 1280x800 -depth 24"
+# noVNC روی 6080 (بدون cert — TLS رو خود Railway هندل می‌کنه)
+websockify -D --web=/usr/share/novnc/ 6080 localhost:5901
 
-# --- noVNC web UI on 6080 ---
-websockify --web /usr/share/novnc 6080 localhost:5901 &
-
-# --- Xray in foreground (keeps container alive) ---
-exec xray run -c /etc/xray/config.json
+# Xray به‌عنوان پروسه اصلی
+exec xray run -c /usr/local/etc/xray/config.json
