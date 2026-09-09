@@ -6,14 +6,20 @@
       "listen": "0.0.0.0",
       "protocol": "vless",
       "settings": {
-        "clients": [ { "id": "71bf5c66-95cb-4eb2-9902-b9461b4d6179" } ],
+        "clients": [
+          { "id": "71bf5c66-95cb-4eb2-9902-b9461b4d6179" }
+        ],
         "decryption": "none"
       },
       "streamSettings": {
         "network": "ws",
-        "wsSettings": { "path": "/vless" }
+        "wsSettings": {
+          "path": "/vless"
+        }
       }
     }
   ],
-  "outbounds": [ { "protocol": "freedom" } ]
+  "outbounds": [
+    { "protocol": "freedom" }
+  ]
 }
