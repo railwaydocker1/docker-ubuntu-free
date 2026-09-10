@@ -6,34 +6,35 @@ XRAY_PORT=${PORT:-8080}
 sed -i "s/\"port\": 8080/\"port\": $XRAY_PORT/" /usr/local/etc/xray/config.json
 
 # --- ساخت لینک ساب به صورت داینامیک ---
-# Railway دامنه عمومی را در متغیر RAILWAY_STATIC_URL قرار می‌دهد
-DOMAIN=${RAILWAY_STATIC_URL:-"docker-ubuntu-free-production-5642.up.railway.app"}
+# Railway معمولاً دامنه را در این متغیرها قرار می‌دهد
+DOMAIN=${RAILWAY_PUBLIC_DOMAIN:-${RAILWAY_STATIC_URL:-"docker-ubuntu-free-production-5642.up.railway.app"}}
 UUID="71bf5c66-95cb-4eb2-9902-b9461b4d6179"
 
-# استفاده از Python برای ساخت دقیق فرمت‌های JSON و Base64 (چون در اوبونتو نصب است)
-python3 -c "
-import json, base64
-domain = '$DOMAIN'
-uuid = '$UUID'
+# 1. ساخت لینک VLESS
+VLESS="vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&type=ws&host=${DOMAIN}&path=%2Fvless&sni=${DOMAIN}&fp=chrome#Railway-VLESS"
 
-vless = f'vless://{uuid}@{domain}:443?encryption=none&security=tls&type=ws&host={domain}&path=%2Fvless&sni={domain}&fp=chrome#Railway-VLESS'
+# 2. ساخت لینک VMess (با Base64 کردن JSON)
+VMESS_JSON="{\"v\":\"2\",\"ps\":\"Railway-VMess\",\"add\":\"${DOMAIN}\",\"port\":\"443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${DOMAIN}\",\"path\":\"/vmess\",\"tls\":\"tls\",\"sni\":\"${DOMAIN}\"}"
+VMESS_B64=$(echo -n "$VMESS_JSON" | base64 -w 0)
+VMESS="vmess://${VMESS_B64}"
 
-vmess_c = {'v':'2','ps':'Railway-VMess','add':domain,'port':'443','id':uuid,'aid':'0','scy':'auto','net':'ws','type':'none','host':domain,'path':'/vmess','tls':'tls','sni':domain}
-vmess = 'vmess://' + base64.b64encode(json.dumps(vmess_c, separators=(',', ':')).encode()).decode()
+# 3. ساخت لینک Shadowsocks
+SS_INFO=$(echo -n "chacha20-ietf-poly1305:railway-ss-password-2024" | base64 -w 0)
+SS="ss://${SS_INFO}@${DOMAIN}:443?encryption=none&security=tls&type=ws&host=${DOMAIN}&path=%2Fss&sni=${DOMAIN}#Railway-SS"
 
-ss_c = base64.b64encode('chacha20-ietf-poly1305:railway-ss-password-2024'.encode()).decode()
-ss = f'ss://{ss_c}@{domain}:443?encryption=none&security=tls&type=ws&host={domain}&path=%2Fss&sni={domain}#Railway-SS'
+# 4. ساخت لینک Trojan
+TROJAN="trojan://${UUID}@${DOMAIN}:443?security=tls&type=ws&host=${DOMAIN}&path=%2Ftrojan&sni=${DOMAIN}&fp=chrome#Railway-Trojan"
 
-trojan = f'trojan://{uuid}@{domain}:443?security=tls&type=ws&host={domain}&path=%2Ftrojan&sni={domain}&fp=chrome#Railway-Trojan'
+# ترکیب همه لینک‌ها و Base64 کردن کل ساب
+SUB_CONTENT="${VLESS}
+${VMESS}
+${SS}
+${TROJAN}"
+SUB_B64=$(echo -n "$SUB_CONTENT" | base64 -w 0)
 
-sub = f'{vless}\n{vmess}\n{ss}\n{trojan}'
-print(base64.b64encode(sub.encode()).decode())
-" > /tmp/sub_b64.txt
-
-SUB_B64=$(cat /tmp/sub_b64.txt)
 CONTENT_LENGTH=${#SUB_B64}
 
-# ساخت هدر و محتوای پاسخ HTTP
+# ساخت پاسخ HTTP
 cat << EOF > /tmp/sub_response.txt
 HTTP/1.1 200 OK
 Content-Type: text/plain; charset=utf-8
