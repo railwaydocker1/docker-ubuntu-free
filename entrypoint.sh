@@ -5,7 +5,7 @@ PORT=${PORT:-8080}
 sed -i "s/listen 8080/listen $PORT/" /etc/nginx/nginx.conf
 
 # تنظیمات دامنه عمومی Railway
-DOMAIN="docker-ubuntu-free-production-5642.up.railway.app"
+DOMAIN="http://altaria.proxy.rlwy.net:45182"
 PUBLIC_PORT="443"
 UUID="71bf5c66-95cb-4eb2-9902-b9461b4d6179"
 
