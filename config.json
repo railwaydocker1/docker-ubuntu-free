@@ -2,49 +2,25 @@
   "log": { "loglevel": "warning" },
   "inbounds": [
     {
-      "listen": "0.0.0.0",
-      "port": 8080,
-      "protocol": "vless",
-      "settings": {
-        "clients": [
-          { "id": "71bf5c66-95cb-4eb2-9902-b9461b4d6179" }
-        ],
-        "decryption": "none",
-        "fallbacks": [
-          { "path": "/vmess", "dest": 8081, "xver": 1 },
-          { "path": "/ss", "dest": 8082, "xver": 1 },
-          { "path": "/trojan", "dest": 8083, "xver": 1 },
-          { "dest": 80, "xver": 0 }
-        ]
-      },
-      "streamSettings": {
-        "network": "ws",
-        "wsSettings": { "path": "/vless" }
-      }
+      "listen": "127.0.0.1", "port": 10000, "protocol": "vless",
+      "settings": { "clients": [ { "id": "71bf5c66-95cb-4eb2-9902-b9461b4d6179" } ], "decryption": "none" },
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vless" } }
     },
     {
-      "listen": "127.0.0.1",
-      "port": 8081,
-      "protocol": "vmess",
+      "listen": "127.0.0.1", "port": 10001, "protocol": "vmess",
       "settings": { "clients": [{ "id": "71bf5c66-95cb-4eb2-9902-b9461b4d6179", "alterId": 0 }] },
-      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vmess", "acceptProxyProtocol": true } }
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/vmess" } }
     },
     {
-      "listen": "127.0.0.1",
-      "port": 8082,
-      "protocol": "shadowsocks",
+      "listen": "127.0.0.1", "port": 10002, "protocol": "shadowsocks",
       "settings": { "clients": [{ "method": "chacha20-ietf-poly1305", "password": "railway-ss-password-2024" }] },
-      "streamSettings": { "network": "ws", "wsSettings": { "path": "/ss", "acceptProxyProtocol": true } }
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/ss" } }
     },
     {
-      "listen": "127.0.0.1",
-      "port": 8083,
-      "protocol": "trojan",
+      "listen": "127.0.0.1", "port": 10003, "protocol": "trojan",
       "settings": { "clients": [{ "password": "71bf5c66-95cb-4eb2-9902-b9461b4d6179" }] },
-      "streamSettings": { "network": "ws", "wsSettings": { "path": "/trojan", "acceptProxyProtocol": true } }
+      "streamSettings": { "network": "ws", "wsSettings": { "path": "/trojan" } }
     }
   ],
-  "outbounds": [
-    { "protocol": "freedom" }
-  ]
+  "outbounds": [ { "protocol": "freedom" } ]
 }
